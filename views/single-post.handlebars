@@ -1,0 +1,61 @@
+{{log "isPostOwner: " isPostOwner}}
+
+<div class="post">
+  <article class="card">
+    <div class="card-header flex-row justify-space-between">
+      <h2>{{post.title}}</h2>
+      <div>
+        Posted by {{post.user.username}} on {{format_date post.createdAt}}
+      </div>
+    </div>
+    <div class="card-body">
+      {{post.body}}
+    </div>
+    {{#if isPostOwner}} <!-- Check if the logged-in user is the owner of the post -->
+      <a href="/edit-post/{{post.id}}" class="btn" id="editPostForm">Edit</a>
+      <input type="hidden" id="post-id" value="{{post.id}}">
+        <button id="deletePostBtn" class="btn btn-danger">Delete Post</button>
+    {{/if}}
+  </article>
+
+  {{#if post.comments}}
+    <section class="card">
+      <div class="card-header">
+        <h3>Comments</h3>
+      </div>
+
+      <div class="card-body">
+        {{#each post.comments}}
+          <div>
+            <p>
+              {{body}}
+            </p>
+            <p>
+              &mdash; {{user.username}}, {{format_date createdAt}}
+            </p>
+          </div>
+        {{/each}}
+      </div>
+    </section>
+  {{/if}}
+
+  <form id="new-comment-form" class="card">
+    <div class="card-header">
+      <h3>Add New Comment</h3>
+    </div>
+
+    <div class="card-body">
+      <input type="hidden" name="post-id" value="{{post.id}}" />
+
+      <label class="form-label" for="comment-body">Comment</label>
+
+      <textarea name="comment-body" class="form-input"></textarea>
+
+      <button type="submit" class="btn">Submit</button>
+    </div>
+  </form>
+  
+</div>
+
+<script src="/js/comment.js"></script>
+<script src="/js/edit.js"></script>

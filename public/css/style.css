@@ -66,7 +66,7 @@ nav a:hover {
   background-color: var(--dark);
 }
 
-.gallery {
+.blog-post {
   flex: 4;
   background-color: #fff;
   padding: 50px;
@@ -161,4 +161,27 @@ img {
   flex-flow: column wrap;
   align-content: flex-start;
   align-items: center;
+}
+
+/* Style inputs and textarea */
+input[type="text"],
+textarea {
+  width: 80%;
+  padding: 8px;
+  margin: 6px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* Center the form horizontally */
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
 }

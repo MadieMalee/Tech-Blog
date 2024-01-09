@@ -1,78 +1,99 @@
-const router = require('express').Router();
-const { Gallery, Painting } = require('../models');
+const router = require("express").Router();
+const withAuth = require("../utils/auth");
+const { User, Post, Comment } = require("../models");
 
-// GET all galleries for homepage
-router.get('/', async (req, res) => {
+// GET all blog posts for homepage
+router.get("/", async (req, res) => {
   try {
-    const dbGalleryData = await Gallery.findAll({
-      include: [
-        {
-          model: Painting,
-          attributes: ['filename', 'description'],
-        },
-      ],
+    const dbPostData = await Post.findAll({
+      include: [User],
     });
 
-    const galleries = dbGalleryData.map((gallery) =>
-      gallery.get({ plain: true })
-    );
-    res.render('homepage', {
-      galleries,
-      loggedIn: req.session.loggedIn,
-    });
+    const postInfo = dbPostData.map((post) => post.get({ plain: true }));
+
+    console.log(req.session.loggedIn)
+
+    res.render("all-post", { postInfo, loggedIn: req.session.loggedIn });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
   }
 });
 
-// GET one gallery
-router.get('/gallery/:id', async (req, res) => {
+// GET one blog post
+router.get("/blogpost/:id", withAuth, async (req, res) => {
   try {
-    const dbGalleryData = await Gallery.findByPk(req.params.id, {
+    const dbPostData = await Post.findByPk(req.params.id, {
       include: [
+        User,
         {
-          model: Painting,
-          attributes: [
-            'id',
-            'title',
-            'artist',
-            'exhibition_date',
-            'filename',
-            'description',
-          ],
+          model: Comment,
+          include: [User],
         },
       ],
     });
 
-    const gallery = dbGalleryData.get({ plain: true });
-    res.render('gallery', { gallery, loggedIn: req.session.loggedIn });
+    // Check if the logged-in user is the owner of the post
+    const isPostOwner = dbPostData && req.session.userId === dbPostData.user_id;
+
+    const post = dbPostData.get({ plain: true });
+
+    res.render("single-post", { post, loggedIn: req.session.loggedIn, isPostOwner });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
   }
 });
 
-// GET one painting
-router.get('/painting/:id', async (req, res) => {
+// GET route for editing a post
+router.get("/edit-post/:id", withAuth, async (req, res) => {
   try {
-    const dbPaintingData = await Painting.findByPk(req.params.id);
+    const postId = req.params.id;
+    const dbPostData = await Post.findByPk(postId, {
+      include: [User],
+    });
 
-    const painting = dbPaintingData.get({ plain: true });
-    res.render('painting', { painting, loggedIn: req.session.loggedIn });
+    // Convert the Sequelize model instance to a plain JavaScript object
+    const post = dbPostData ? dbPostData.get({ plain: true }) : null;
+
+    // Check if the logged-in user is the owner of the post
+    const isPostOwner = dbPostData && req.session.userId === dbPostData.user_id;
+
+    // Pass the post data and isPostOwner to the edit-post template
+    res.render("edit-post", { post, loggedIn: req.session.loggedIn, isPostOwner });
   } catch (err) {
     console.log(err);
     res.status(500).json(err);
   }
+});
+
+router.get("/dashboard", async (req, res) => {
+  try {
+
+    const dbUserPostData = await Post.findAll({where: {user_id: req.session.userId}});
+
+    const userHistory = dbUserPostData.map((post) => post.get({ plain: true }));
+
+    console.log(userHistory);
+
+    res.render("user-posts", { layout: "dashboard", data: { userHistory } })
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(err);
+  }
+});
+
+router.get("/new-post", withAuth, (req, res) => {
+  res.render("new-post", { loggedIn: req.session.loggedIn });
 });
 
 // Login route
-router.get('/login', (req, res) => {
+router.get("/login", (req, res) => {
   if (req.session.loggedIn) {
-    res.redirect('/');
+    res.redirect("/");
     return;
   }
-  res.render('login');
+  res.render("login");
 });
 
 module.exports = router;
